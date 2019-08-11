@@ -1,0 +1,2 @@
+# catnip
+My Discord chatbot
