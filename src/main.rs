@@ -8,7 +8,12 @@ use serenity::{
         HelpOptions, help_commands, StandardFramework,
         macros::{group, help},
     },
-    model::{channel::Message, gateway::Ready, id::UserId},
+    model::{
+        channel::Message,
+        gateway::{Activity, Ready},
+        guild::Member,
+        id::UserId,
+    },
 };
 
 use std::{
@@ -25,8 +30,22 @@ use dotenv::dotenv;
 struct Handler;
 
 impl EventHandler for Handler {
-    fn ready(&self, _: Context, ready: Ready) {
+    fn ready(&self, context: Context, ready: Ready) {
+        let activity = Activity::playing("with your RNG tables");
+        context.set_activity(activity);
+
         info!("{} is connected!", ready.user.name);
+    }
+
+    fn guild_member_update(&self,
+                           _context: Context,
+                           old_if_available: Option<Member>,
+                           new: Member)
+    {
+        // TODO: Stream start detection
+        debug!("Got member update event, old data: {:?}, new data: {:?}",
+               old_if_available,
+               new)
     }
 }
 
