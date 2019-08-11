@@ -4,5 +4,6 @@ version = "0.1.0"
 authors = ["skrytt"]
 edition = "2018"
 
-[dependencies.serenity]
-version = "0.6"
+[dependencies]
+rand = "0.7"
+serenity = "0.6"
