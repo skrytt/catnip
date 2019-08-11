@@ -16,10 +16,10 @@ use std::{
     env,
 };
 use serenity::prelude::*;
-use log::Level;
 use commands::{
     general::*,
 };
+use dotenv::dotenv;
 
 
 struct Handler;
@@ -58,7 +58,7 @@ fn my_help(
 }
 
 fn main() {
-    kankyo::load(false)
+    dotenv()
         .expect("Failed to load .env file");
 
     env_logger::init();
