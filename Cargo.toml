@@ -1,0 +1,8 @@
+[package]
+name = "catnip"
+version = "0.1.0"
+authors = ["skrytt"]
+edition = "2018"
+
+[dependencies.serenity]
+version = "0.6"
