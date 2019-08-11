@@ -55,10 +55,14 @@ fn my_help(
 }
 
 fn main() {
+    kankyo::load(false)
+        .expect("Failed to load .env file");
+
     let token = env::var("DISCORD_TOKEN")
         .expect("Expected a token in the environment");
 
-    let mut client = Client::new(&token, Handler).expect("Error creating client");
+    let mut client = Client::new(&token, Handler)
+        .expect("Error creating client");
 
     let (owners, bot_id) = match client.cache_and_http.http.get_current_application_info() {
         Ok(info) => {
@@ -77,8 +81,8 @@ fn main() {
             .on_mention(Some(bot_id))
             .prefix("!")
             .delimiters(vec![", ", ","])
-            .owners(owners))
-
+            .owners(owners)
+        )
         // Code to execute before a command execution
         .before(|_context, msg, command_name| {
             println!("Got command '{}' by user '{}'",
@@ -86,7 +90,6 @@ fn main() {
                      msg.author.name);
             true
         })
-
         // Code to execute after a command execution
         .after(|_context, _msg, command_name, error| {
             match error {
@@ -100,8 +103,8 @@ fn main() {
             println!("Could not find command named '{}'", unknown_command_name);
         })
         // Code to execute when commands fail to dispatch
-        .on_dispatch_error(|_context, _msg, error| {
-            println!("{:?}", error);
+        .on_dispatch_error(|_context, msg, error| {
+            println!("Failed to dispatch `{}`: {:?}", msg.content, error);
         })
         .help(&MY_HELP)
         .group(&GENERAL_GROUP)
