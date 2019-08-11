@@ -1,3 +1,5 @@
+#[macro_use] extern crate log;
+
 mod commands;
 
 use serenity::{
@@ -14,6 +16,7 @@ use std::{
     env,
 };
 use serenity::prelude::*;
+use log::Level;
 use commands::{
     general::*,
 };
@@ -23,7 +26,7 @@ struct Handler;
 
 impl EventHandler for Handler {
     fn ready(&self, _: Context, ready: Ready) {
-        println!("{} is connected!", ready.user.name);
+        info!("{} is connected!", ready.user.name);
     }
 }
 
@@ -58,6 +61,8 @@ fn main() {
     kankyo::load(false)
         .expect("Failed to load .env file");
 
+    env_logger::init();
+
     let token = env::var("DISCORD_TOKEN")
         .expect("Expected a token in the environment");
 
@@ -85,7 +90,7 @@ fn main() {
         )
         // Code to execute before a command execution
         .before(|_context, msg, command_name| {
-            println!("Got command '{}' by user '{}'",
+            debug!("Got command '{}' by user '{}'",
                      command_name,
                      msg.author.name);
             true
@@ -93,24 +98,24 @@ fn main() {
         // Code to execute after a command execution
         .after(|_context, _msg, command_name, error| {
             match error {
-                Ok(()) => println!("Processed command '{}'", command_name),
-                Err(why) => println!("Command '{}' returned error {:?}", command_name, why),
+                Ok(()) => debug!("Processed command '{}'", command_name),
+                Err(why) => error!("Command '{}' returned error {:?}", command_name, why),
             }
         })
         // Code to execute whenever an attempted command-call's
         // command could not be found
         .unrecognised_command(|_, _, unknown_command_name| {
-            println!("Could not find command named '{}'", unknown_command_name);
+            debug!("Could not find command named '{}'", unknown_command_name);
         })
         // Code to execute when commands fail to dispatch
         .on_dispatch_error(|_context, msg, error| {
-            println!("Failed to dispatch `{}`: {:?}", msg.content, error);
+            debug!("Failed to dispatch `{}`: {:?}", msg.content, error);
         })
         .help(&MY_HELP)
         .group(&GENERAL_GROUP)
     );
 
     if let Err(why) = client.start() {
-        println!("Client error: {:?}", why);
+        error!("Client error: {:?}", why);
     }
 }
