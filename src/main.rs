@@ -1,13 +1,12 @@
-use rand::{Rng, thread_rng};
+mod commands;
 
 use serenity::{
     framework::standard::{
         Args, CommandResult, CommandGroup,
         HelpOptions, help_commands, StandardFramework,
-        macros::{command, group, help},
+        macros::{group, help},
     },
     model::{channel::Message, gateway::Ready, id::UserId},
-    utils::MessageBuilder,
 };
 
 use std::{
@@ -15,6 +14,10 @@ use std::{
     env,
 };
 use serenity::prelude::*;
+use commands::{
+    general::*,
+};
+
 
 struct Handler;
 
@@ -107,25 +110,4 @@ fn main() {
     if let Err(why) = client.start() {
         println!("Client error: {:?}", why);
     }
-}
-
-#[command]
-/// Roll 1d20 and send a response with the result.
-fn roll20(context: &mut Context, msg: &Message) -> CommandResult {
-
-    // The RNG function produces values in the range 0 to 20-1, so
-    // add 1 to bring the range into the expected range.
-    let rolled_value: i32 = thread_rng().gen_range(0, 20) + 1;
-
-    let response = MessageBuilder::new()
-        .push_bold_safe(&msg.author)
-        .push(" rolls 1d20 with the result: ")
-        .push_bold(rolled_value)
-        .build();
-
-    if let Err(why) = msg.channel_id.say(&context.http, &response) {
-        println!("Error sending message: {:?}", why);
-    }
-
-    Ok(())
 }
