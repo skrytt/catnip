@@ -13,6 +13,7 @@ use serenity::{
 #[command]
 /// Roll 1d20 and send a response with the result.
 fn roll20(context: &mut Context, msg: &Message) -> CommandResult {
+    debug!("roll20 command handler called");
 
     // The RNG function produces values in the range 0 to 20-1, so
     // add 1 to bring the range into the expected range.
@@ -25,7 +26,7 @@ fn roll20(context: &mut Context, msg: &Message) -> CommandResult {
         .build();
 
     if let Err(why) = msg.channel_id.say(&context.http, &response) {
-        println!("Error sending message: {:?}", why);
+        error!("Error sending message: {:?}", why);
     }
 
     Ok(())
