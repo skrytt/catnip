@@ -23,7 +23,7 @@ use std::{
 use serenity::prelude::*;
 use commands::{
     general::*,
-    cat::*,
+    cat::cat::*,
 };
 use dotenv::dotenv;
 
