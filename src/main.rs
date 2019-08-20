@@ -23,6 +23,7 @@ use std::{
 use serenity::prelude::*;
 use commands::{
     general::*,
+    cat::*,
 };
 use dotenv::dotenv;
 
@@ -53,6 +54,12 @@ group!({
     name: "general",
     options: {},
     commands: [roll20],
+});
+
+group!({ 
+    name: "cat",
+    options: {},
+    commands: [cat],
 });
 
 #[help]
@@ -132,6 +139,7 @@ fn main() {
         })
         .help(&MY_HELP)
         .group(&GENERAL_GROUP)
+        .group(&CAT_GROUP)
     );
 
     if let Err(why) = client.start() {
