@@ -50,13 +50,10 @@ impl EventHandler for Handler {
         // Stream start detection
         let streaming_activity = match new.presence.activity {
             None => return,
-            //Some(activity) => match activity.kind {
-            //    ActivityType::Streaming => activity,
-            //    _ => return,
-            //},
-
-            // For testing only
-            Some(activity) => activity
+            Some(activity) => match activity.kind {
+                ActivityType::Streaming => activity,
+                _ => return,
+            },
         };
 
         debug!("DB path check...");
