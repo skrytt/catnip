@@ -24,6 +24,7 @@ use std::{
 use serenity::prelude::*;
 use commands::{
     general::*,
+    cat::cat::*,
 };
 use dotenv::dotenv;
 use time;
@@ -163,6 +164,12 @@ group!({
     commands: [roll20],
 });
 
+group!({ 
+    name: "cat",
+    options: {},
+    commands: [cat],
+});
+
 #[help]
 #[individual_command_tip =
 "Hello! こんにちは！Hola! Bonjour! 您好!\n\
@@ -243,6 +250,7 @@ fn main() {
         })
         .help(&MY_HELP)
         .group(&GENERAL_GROUP)
+        .group(&CAT_GROUP)
     );
 
     if let Err(why) = client.start() {
