@@ -1,6 +1,7 @@
 #[macro_use] extern crate log;
 
 mod commands;
+mod database;
 
 use serenity::{
     framework::standard::{
@@ -10,8 +11,8 @@ use serenity::{
     },
     model::{
         channel::Message,
-        gateway::{Activity, Ready},
-        guild::Member,
+        event::PresenceUpdateEvent,
+        gateway::{Activity, ActivityType, Ready},
         id::UserId,
     },
 };
@@ -25,7 +26,9 @@ use commands::{
     general::*,
 };
 use dotenv::dotenv;
+use time;
 
+const STREAM_ADVERTISE_COOLDOWN: i64 = 21600; // 6 hours
 
 struct Handler;
 
@@ -37,15 +40,120 @@ impl EventHandler for Handler {
         info!("{} is connected!", ready.user.name);
     }
 
-    fn guild_member_update(&self,
-                           _context: Context,
-                           old_if_available: Option<Member>,
-                           new: Member)
+    fn presence_update(&self,
+                       context: Context,
+                       new: PresenceUpdateEvent)
     {
-        // TODO: Stream start detection
-        debug!("Got member update event, old data: {:?}, new data: {:?}",
-               old_if_available,
-               new)
+        debug!("Presence update, new.presence: {:?}", new.presence);
+
+        // Stream start detection
+        let streaming_activity = match new.presence.activity {
+            None => return,
+            //Some(activity) => match activity.kind {
+            //    ActivityType::Streaming => activity,
+            //    _ => return,
+            //},
+
+            // For testing only
+            Some(activity) => activity
+        };
+
+        debug!("DB path check...");
+        let db_path = match env::var("DATABASE_PATH") {
+            Err(_) => {
+                error!("DATABASE_PATH is not set in the environment");
+                return
+            }
+            Ok(path) => path,
+        };
+        let database = database::Handle::new(&db_path);
+
+        debug!("User retrieval...");
+        let discord_user_id = new.presence.user_id;
+
+        match context.cache.read().user(discord_user_id) {
+            None => {
+                error!("Failed to get Discord user object from Serenity cache");
+                return
+            },
+            Some(user) => {
+                let user = user.read();
+                debug!("Member {} ({}#{}) presence update with activity name '{:?}'",
+                       user.id,
+                       user.name,
+                       user.discriminator,
+                       streaming_activity.name,
+                );
+            },
+        };
+        match database.user(discord_user_id.0) {
+            Err(_) => {
+                error!("Could not retrieve user data from database");
+                return
+            },
+            Ok(Some(_)) => (),
+            Ok(None) => {
+                if let Err(_) = database.user_update(
+                    discord_user_id.0, &Default::default()
+                ) {
+                    error!("Could not add user data to database");
+                    return
+                }
+            },
+        };
+
+        debug!("Guild retrieval...");
+        let discord_guild_id = match new.guild_id {
+            None => {
+                debug!("Got presence update with no discord guild ID");
+                return
+            },
+            Some(guild_id) => guild_id,
+        };
+        match database.guild(discord_guild_id.0) {
+            Err(_) => {
+                error!("Could not retrieve guild data from database");
+                return
+            },
+            Ok(Some(_)) => (),
+            Ok(None) => {
+                if let Err(_) = database.guild_update(
+                    discord_guild_id.0, &Default::default()
+                ) {
+                    error!("Could not add guild data to database");
+                    return
+                }
+            }
+        };
+
+        debug!("Member retrieval...");
+        let mut member: database::Member = match database.member(
+            discord_guild_id.0, discord_user_id.0)
+        {
+            Err(_) => {
+                error!("Could not retrieve member data from database");
+                return
+            },
+            Ok(Some(data)) => data,
+            Ok(None) => Default::default(),
+        };
+
+        debug!("member data: {:?}", member);
+        let this_timestamp = time::get_time().sec;
+        if this_timestamp - member.last_stream_notify_timestamp > STREAM_ADVERTISE_COOLDOWN {
+            member.last_stream_notify_timestamp = this_timestamp;
+            if let Err(_) = database.member_update(
+                discord_guild_id.0,
+                discord_user_id.0,
+                &member
+            ) {
+                error!("Could not add member data to database");
+                return
+            }
+            debug!("Updated member timestamp and would shout out stream!");
+        } else {
+            debug!("Last stream too recent; would not shout out stream");
+        }
     }
 }
 
@@ -85,8 +193,11 @@ fn main() {
     let token = env::var("DISCORD_TOKEN")
         .expect("Expected a token in the environment");
 
-    let mut client = Client::new(&token, Handler)
-        .expect("Error creating client");
+    let mut client = Client::new(
+        &token,
+        Handler
+    )
+    .expect("Error creating client");
 
     let (owners, bot_id) = match client.cache_and_http.http.get_current_application_info() {
         Ok(info) => {
