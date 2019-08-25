@@ -1,13 +1,16 @@
 
 use rusqlite::{params, Connection};
+use std::env;
 
-#[derive(Debug, Default)]
+const DEFAULT_DATABASE_PATH: &'static str = "sqlite/catnip.db3";
+
+#[derive(Clone, Debug, Default)]
 pub struct Guild {}
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct User {}
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct Member {
     pub last_stream_notify_timestamp: i64,
 }
@@ -20,7 +23,12 @@ pub struct Handle {
 }
 
 impl Handle {
-    pub fn new(db_path: &str) -> Self {
+    pub fn new() -> Self {
+        // Set DATABASE_PATH in the .env file to override the default path.
+        let db_path: String = match env::var("DATABASE_PATH") {
+            Err(_) => String::from(DEFAULT_DATABASE_PATH),
+            Ok(path) => path,
+        };
         Self {
             connection: Connection::open(db_path)
                 .expect("rusqlite::Connection::open() failed"),
@@ -40,7 +48,7 @@ impl Handle {
 
         let mut result_iter = match stmt.query_map(
             params![guild_id as i64],
-            |row|
+            |_row|
         {
             Ok(Guild{})
         }) {
@@ -56,17 +64,16 @@ impl Handle {
 
     pub fn guild_update(&self,
         guild_id: u64,
-        data: &Guild,
+        _data: &Guild,
     ) -> Result<(), ()>
     {
-        let mut stmt = match self.connection.execute(
+        if let Err(_) = self.connection.execute(
             // Placeholder for storing something of actual use...
             "INSERT OR REPLACE INTO Guilds(DiscordGuildId) VALUES(?1)",
             params![guild_id as i64],
         )
         {
-            Ok(stmt) => stmt,
-            Err(_) => return Err(()),
+            return Err(())
         };
         Ok(())
     }
@@ -84,7 +91,7 @@ impl Handle {
 
         let mut result_iter = match stmt.query_map(
             params![user_id as i64],
-            |row|
+            |_row|
         {
             Ok(User{})
         }) {
@@ -99,17 +106,16 @@ impl Handle {
     }
     pub fn user_update(&self,
         user_id: u64,
-        data: &User,
+        _data: &User,
     ) -> Result<(), ()>
     {
-        let mut stmt = match self.connection.execute(
+        if let Err(_) = self.connection.execute(
             // Placeholder for storing something of actual use...
             "INSERT OR REPLACE INTO Users(DiscordUserId) VALUES(?1)",
             params![user_id as i64],
         )
         {
-            Ok(stmt) => stmt,
-            Err(_) => return Err(()),
+            return Err(())
         };
         Ok(())
     }
@@ -153,7 +159,7 @@ impl Handle {
         data: &Member
     ) -> Result<(), ()>
     {
-        let mut stmt = match self.connection.execute(
+        if let Err(_) = self.connection.execute(
             "INSERT OR REPLACE INTO Members(
              DiscordGuildId, DiscordUserId, LastStreamNotifyTimestamp)
              VALUES(?1, ?2, ?3)",
@@ -164,8 +170,7 @@ impl Handle {
             ],
         )
         {
-            Ok(stmt) => stmt,
-            Err(_) => return Err(()),
+            return Err(())
         };
         Ok(())
     }

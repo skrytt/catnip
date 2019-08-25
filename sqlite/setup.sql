@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS Members (
     LastStreamNotifyTimestamp INTEGER NOT NULL,
 
     FOREIGN KEY (DiscordGuildId) REFERENCES Guilds(DiscordGuildId),
-    FOREIGN KEY (DiscordUserId) REFERENCES Guilds(DiscordUserId),
+    FOREIGN KEY (DiscordUserId) REFERENCES Users(DiscordUserId),
     UNIQUE (DiscordGuildId, DiscordUserId)
 );
 CREATE UNIQUE INDEX IF NOT EXISTS IndexDiscordMemberId ON Members(DiscordGuildId, DiscordUserId);
