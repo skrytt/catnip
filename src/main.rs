@@ -1,8 +1,16 @@
 #[macro_use] extern crate log;
 
 mod commands;
+mod database;
+mod stream_notify;
 
+use commands::{
+    general::*,
+    cat::cat::*,
+};
+use dotenv::dotenv;
 use serenity::{
+    prelude::*,
     framework::standard::{
         Args, CommandResult, CommandGroup,
         HelpOptions, help_commands, StandardFramework,
@@ -10,43 +18,39 @@ use serenity::{
     },
     model::{
         channel::Message,
-        gateway::{Activity, Ready},
-        guild::Member,
+        event::PresenceUpdateEvent,
+        gateway::{Activity, Presence, Ready},
         id::UserId,
     },
 };
-
 use std::{
     collections::HashSet,
     env,
 };
-use serenity::prelude::*;
-use commands::{
-    general::*,
-    cat::cat::*,
-};
-use dotenv::dotenv;
-
 
 struct Handler;
 
 impl EventHandler for Handler {
     fn ready(&self, context: Context, ready: Ready) {
+        debug!("Callback ready: {:?}", ready);
         let activity = Activity::playing("with your RNG tables");
         context.set_activity(activity);
-
         info!("{} is connected!", ready.user.name);
     }
 
-    fn guild_member_update(&self,
-                           _context: Context,
-                           old_if_available: Option<Member>,
-                           new: Member)
+    fn presence_replace(&self,
+                        _context: Context,
+                        new_vec: Vec<Presence>)
     {
-        // TODO: Stream start detection
-        debug!("Got member update event, old data: {:?}, new data: {:?}",
-               old_if_available,
-               new)
+        debug!("Callback presence_replace: {:?}", new_vec);
+    }
+
+    fn presence_update(&self,
+                       context: Context,
+                       new: PresenceUpdateEvent)
+    {
+        debug!("Callback presence_update: {:?}", new.presence);
+        stream_notify::handler(context, new);
     }
 }
 
@@ -92,8 +96,11 @@ fn main() {
     let token = env::var("DISCORD_TOKEN")
         .expect("Expected a token in the environment");
 
-    let mut client = Client::new(&token, Handler)
-        .expect("Error creating client");
+    let mut client = Client::new(
+        &token,
+        Handler
+    )
+    .expect("Error creating client");
 
     let (owners, bot_id) = match client.cache_and_http.http.get_current_application_info() {
         Ok(info) => {
