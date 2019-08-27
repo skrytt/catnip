@@ -108,7 +108,7 @@ pub fn handler(
         Ok(None) => Default::default(),
     };
 
-    // Set STREAM_NOTIFY_COOLDOWN in the .env file to override the default duration.
+    // Set STREAM_NOTIFY_COOLDOWN in the mount/env file to override the default duration.
     let stream_notify_cooldown: i64 = match env::var("STREAM_NOTIFY_COOLDOWN") {
         Ok(val_s) => match val_s.parse() {
             Ok(val) => val,
@@ -149,7 +149,7 @@ fn stream_notify(
     }
     debug!("Updated member timestamp to {}", member.last_stream_notify_timestamp);
 
-    // Set STREAM_NOTIFY_CHANNEL_ID in the .env file to the name of a channel in the guild.
+    // Set STREAM_NOTIFY_CHANNEL_ID in the mount/env file to the name of a channel in the guild.
     // By using the ID, the channel can be renamed without breaking the integration.
     // TODO: Make this a DB setting in the Guilds table instead, since different guilds will
     // want to use different channel names for this.
