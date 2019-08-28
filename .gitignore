@@ -1,3 +1,3 @@
-Cargo.lock
-.env
-target/*
+app/Cargo.lock
+app/target
+mount

@@ -2,7 +2,7 @@
 use rusqlite::{params, Connection};
 use std::env;
 
-const DEFAULT_DATABASE_PATH: &'static str = "sqlite/catnip.db3";
+const DEFAULT_DATABASE_PATH: &'static str = "/catnip/mount/catnip.db3";
 
 #[derive(Clone, Debug, Default)]
 pub struct Guild {}
@@ -24,7 +24,7 @@ pub struct Handle {
 
 impl Handle {
     pub fn new() -> Self {
-        // Set DATABASE_PATH in the .env file to override the default path.
+        // Set DATABASE_PATH in the mount/env file to override the default path.
         let db_path: String = match env::var("DATABASE_PATH") {
             Err(_) => String::from(DEFAULT_DATABASE_PATH),
             Ok(path) => path,

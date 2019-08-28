@@ -1,5 +1,5 @@
 #[macro_use] extern crate log;
-
+//
 mod commands;
 mod database;
 mod stream_notify;
@@ -8,7 +8,7 @@ use commands::{
     general::*,
     cat::cat::*,
 };
-use dotenv::dotenv;
+use dotenv;
 use serenity::{
     prelude::*,
     framework::standard::{
@@ -88,8 +88,8 @@ fn my_help(
 }
 
 fn main() {
-    dotenv()
-        .expect("Failed to load .env file");
+    dotenv::from_filename("mount/env")
+        .expect("Failed to load mount/env file");
 
     env_logger::init();
 
