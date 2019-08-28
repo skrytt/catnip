@@ -8,8 +8,7 @@ RUN apt-get install -y libsqlite3-dev
 WORKDIR /usr/src
 RUN USER=root cargo new --bin catnip
 WORKDIR /usr/src/catnip
-COPY app/Cargo.lock ./Cargo.lock
-COPY app/Cargo.toml ./Cargo.toml
+COPY app/Cargo.* ./
 
 # Build dependencies
 RUN cargo build --release
