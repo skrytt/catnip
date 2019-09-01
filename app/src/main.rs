@@ -7,6 +7,7 @@ mod stream_notify;
 use commands::{
     general::*,
     cat::cat::*,
+    roll::*
 };
 use dotenv;
 use serenity::{
@@ -57,7 +58,10 @@ impl EventHandler for Handler {
 group!({
     name: "general",
     options: {},
-    commands: [roll20],
+    commands: [
+        roll20,
+        roll,
+    ],
 });
 
 group!({ 
