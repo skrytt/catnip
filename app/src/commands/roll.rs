@@ -20,7 +20,8 @@ fn roll(context: &mut Context, msg: &Message) -> CommandResult {
         Ok(value) => value,
         Err(_) => return Err(CommandError(
             format!("Couldn't parse this message as dice: {:?}", msg.content)
-            .to_string())),
+            .to_string()
+        )),
     };
 
     let mut rolled_value: u32 = 0;
@@ -56,7 +57,9 @@ fn parse_roll(msg: &Message) -> Result<[u32; 2], ()> {
         1 => {
             let num_dice = 1;
             let num_sides = match atoi(roll[0]) {
-                Ok(value) => value,
+                Ok(value) => {
+                    if value < 101 { value } else { return Err(()) }
+                },
                 Err(_) => return Err(()),
             };
             (num_dice, num_sides)
@@ -64,12 +67,16 @@ fn parse_roll(msg: &Message) -> Result<[u32; 2], ()> {
         2 => {
             let num_dice = if roll[0].is_empty() { 1 } else { 
                 match atoi(roll[0]) {
-                    Ok(value) => value,
+                    Ok(value) => {
+                        if value < 100 { value } else { return Err(()) }
+                    },
                     Err(_) => return Err(()),
                 }
             };
             let num_sides = match atoi(roll[1]) {
-                Ok(value) => value,
+                Ok(value) => {
+                    if value < 101 { value } else { return Err(()) }
+                },
                 Err(_) => return Err(()),
             };
             (num_dice, num_sides)
