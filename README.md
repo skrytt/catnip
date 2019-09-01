@@ -6,11 +6,9 @@ A Discord chatbot written in Rust, using Serenity and SQLite.
 
 These instructions describe the basic setup process:
 
-- Create a subdirectory "mount" that will be used as a Docker mount volume
-- Create the SQLite database: `sqlite3 mount/catnip.db3 ".read sqlite/setup.sql"`
-- Create env file `mount/env` with contents like:
+- Create a configuration file `mount/env` with contents like:
 ```
-DISCORD_TOKEN="YOUR_BOT_TOKEN_GOES_HERE"
+DISCORD_TOKEN=YOUR_BOT_TOKEN_GOES_HERE
 RUST_LOG=warn,catnip=debug
 ```
 - Build the Docker image: `docker build -t catnip .`

@@ -1,6 +1,6 @@
 
-use rusqlite::{params, Connection};
-use std::env;
+use rusqlite::{params, Connection, NO_PARAMS};
+use std::{env, fs, io::Read};
 
 const DEFAULT_DATABASE_PATH: &'static str = "/catnip/mount/catnip.db3";
 
@@ -33,6 +33,72 @@ impl Handle {
             connection: Connection::open(db_path)
                 .expect("rusqlite::Connection::open() failed"),
         }
+    }
+
+    pub fn update_schema(&self) -> Result<(), ()> {
+        // Read file names into a Vec for sorting
+        let mut sql_files: Vec<_> = match fs::read_dir("/catnip/mount/sql") {
+            Ok(files) => files,
+            Err(_) => {
+                error!("Could not find any sqlfiles");
+                return Err(())
+            }
+        }
+        .map(|r| r.unwrap())
+        .collect();
+        sql_files.sort_by_key(|dir| dir.path());
+        debug!("Found sql files {:?}", sql_files);
+
+        let mut sql_file_iter = sql_files.iter();
+        loop {
+            // Read current user_version
+            let user_version: i32 = match self.connection.pragma_query_value(
+                None, "user_version", |row| row.get(0))
+            {
+                Ok(value) => value,
+                Err(_) => {
+                    error!("Could not query user_version of database");
+                    return Err(())
+                }
+            };
+
+            // Try to find the next user_version (N+1) to upgrade to
+            let prefix_to_find = format!("{:03}", user_version+1);
+            debug!("searching for sql file matching prefix {}", prefix_to_find);
+
+            match sql_file_iter.next() {
+                Some(sql_file) => if sql_file.file_name()
+                    .into_string()
+                    .unwrap()
+                    .starts_with(prefix_to_find.as_str())
+                {
+                    let mut file = match fs::File::open(sql_file.path()) {
+                        Ok(file) => file,
+                        Err(_) => return Err(()),
+                    };
+                    debug!("Opened sql file {:?}", sql_file.path());
+
+                    let mut sql_content = String::new();
+                    if let Err(_) = file.read_to_string(&mut sql_content) {
+                        error!("Could not read SQL file {:?}", sql_file.path());
+                        return Err(())
+                    }
+                    debug!("Read sql file content");
+
+                    info!("Applying DB schema migration {:?}", sql_file.path());
+                    match self.connection.execute_batch(sql_content.as_str()) {
+                        Ok(_) => info!("Migrated successfully"),
+                        Err(_) => {
+                            error!("Failed to apply schema migration");
+                            return Err(())
+                        }
+                    };
+                },
+                None => break,
+            }
+        }
+
+        Ok(())
     }
 
     pub fn guild(&self,
