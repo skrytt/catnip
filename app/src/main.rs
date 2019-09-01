@@ -58,7 +58,10 @@ impl EventHandler for Handler {
 group!({
     name: "general",
     options: {},
-    commands: [roll20],
+    commands: [
+        roll20,
+        roll,
+    ],
 });
 
 group!({ 

@@ -5,31 +5,32 @@ use serenity::{
     model::prelude::*,
     framework::standard::{
         CommandResult,
+        CommandError,
         macros::command,
     },
     utils::MessageBuilder,
 };
 
 #[command]
-/// Roll 1d20 and send a response with the result.
+/// Roll a number of same-sided dice and send a response with the result.
 fn roll(context: &mut Context, msg: &Message) -> CommandResult {
-    debug!("roll20 command handler called");
+    debug!("roll command handler called");
 
-    dice = parse_roll(msg);
-    if dice.is_err() {
-        error!("Error parsing roll: {:?}", dice)
-    }
+    let dice = match parse_roll(msg) {
+        Ok(value) => value,
+        Err(_) => return Err(CommandError(
+            format!("Couldn't parse this message as dice: {:?}", msg.content)
+            .to_string())),
+    };
 
-    rolled_value: u32 = 0
-    for value in 1..dice[0] {
-        rolled_value += roll_die(dice[1])
-    }
+    let mut rolled_value: u32 = 0;
+    for _ in 0..dice[0] {
+        rolled_value += roll_die(&dice[1]);
+    };
 
     let response = MessageBuilder::new()
         .push_bold_safe(&msg.author)
-        .push(
-            format!(" rolls {:?} with the result: ", msg.content.split(' ')[1])
-        )
+        .push(" rolls a fistful of dice with the result: ")
         .push_bold(rolled_value)
         .build();
 
@@ -42,26 +43,51 @@ fn roll(context: &mut Context, msg: &Message) -> CommandResult {
 
 /// Transforms a message into a roll; e.g, for n * roll of m sided die:
 ///     !roll ndm -> [n, m]
-fn parse_roll(msg: &Message) -> [u32, 2] {
+fn parse_roll(msg: &Message) -> Result<[u32; 2], ()> {
     debug!("received: {:?}", msg);
-    roll = msg.content.split(' ')[1].split('d').collect();
-
-    if dice.len() == 2 {
-        let dice: [u32, 2] = [
-            roll[0].parse().unwrap(), 
-            roll[1].parse().unwrap()
-        ]
-    } else if dice.len() == 1 {
-        let dice: [u32, 2] = [
-            1
-            roll[1].parse().unwrap()
-        ]
-    } else {
-        error!("Too many dice for this version!: {:?}", dice);
+    let args: Vec<&str> = msg.content.split(' ').collect();
+    if args.len() != 2 {
+        return Err(());
     }
+
+    let roll: Vec<&str> = args[1].split('d').collect();
+    let roll_len = roll.len();
+    let (num_dice, num_sides) = match roll_len {
+        1 => {
+            let num_dice = 1;
+            let num_sides = match atoi(roll[0]) {
+                Ok(value) => value,
+                Err(_) => return Err(()),
+            };
+            (num_dice, num_sides)
+        },
+        2 => {
+            let num_dice = if roll[0].is_empty() { 1 } else { 
+                match atoi(roll[0]) {
+                    Ok(value) => value,
+                    Err(_) => return Err(()),
+                }
+            };
+            let num_sides = match atoi(roll[1]) {
+                Ok(value) => value,
+                Err(_) => return Err(()),
+            };
+            (num_dice, num_sides)
+        },
+        _ => return Err(())
+    };
+    Ok([num_dice, num_sides])
 }
 
 /// Generates random number based on value of die given
-fn roll_die(d: &u32) -> u32 {
-    thread_rng().gen_range(1, d+=1);
+fn roll_die(d: &u32) -> u32 {;
+    thread_rng().gen_range(1, *d + 1)
+}
+
+/// Convert string to a u32
+fn atoi(s: &str) -> Result<u32, ()> {
+    match s.to_string().parse::<u32>() {
+        Ok(value) => Ok(value),
+        Err(_) => return Err(()),
+    }
 }
