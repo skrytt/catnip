@@ -96,6 +96,11 @@ fn main() {
     let token = env::var("DISCORD_TOKEN")
         .expect("Expected a token in the environment");
 
+    // Do any database schema migration work before starting the Discord client
+    let database = database::Handle::new();
+    database.update_schema()
+        .expect("Couldn't update database schema, giving up");
+
     let mut client = Client::new(
         &token,
         Handler

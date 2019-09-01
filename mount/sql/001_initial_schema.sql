@@ -1,3 +1,5 @@
+BEGIN;
+
 PRAGMA encoding = "UTF-8";
 PRAGMA foreign_keys = ON;
 
@@ -29,3 +31,7 @@ CREATE TABLE IF NOT EXISTS Members (
     UNIQUE (DiscordGuildId, DiscordUserId)
 );
 CREATE UNIQUE INDEX IF NOT EXISTS IndexDiscordMemberId ON Members(DiscordGuildId, DiscordUserId);
+
+PRAGMA user_version=1;
+
+COMMIT;
