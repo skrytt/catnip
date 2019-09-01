@@ -7,6 +7,7 @@ mod stream_notify;
 use commands::{
     general::*,
     cat::cat::*,
+    roll::*
 };
 use dotenv;
 use serenity::{
