@@ -1,5 +1,5 @@
 #[macro_use] extern crate log;
-//
+
 mod commands;
 mod database;
 mod stream_notify;
@@ -7,7 +7,8 @@ mod stream_notify;
 use commands::{
     general::*,
     cat::cat::*,
-    roll::*
+    roll::*,
+    user::*,
 };
 use dotenv;
 use serenity::{
@@ -64,10 +65,16 @@ group!({
     ],
 });
 
-group!({ 
+group!({
     name: "cat",
     options: {},
     commands: [cat],
+});
+
+group!({
+    name: "user",
+    options: {},
+    commands: [title],
 });
 
 #[help]
@@ -156,6 +163,7 @@ fn main() {
         .help(&MY_HELP)
         .group(&GENERAL_GROUP)
         .group(&CAT_GROUP)
+        .group(&USER_GROUP)
     );
 
     if let Err(why) = client.start() {

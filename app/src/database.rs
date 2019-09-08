@@ -1,5 +1,5 @@
 
-use rusqlite::{params, Connection, NO_PARAMS};
+use rusqlite::{params, Connection};
 use std::{env, fs, io::Read};
 
 const DEFAULT_DATABASE_PATH: &'static str = "/catnip/mount/catnip.db3";
@@ -8,14 +8,13 @@ const DEFAULT_DATABASE_PATH: &'static str = "/catnip/mount/catnip.db3";
 pub struct Guild {}
 
 #[derive(Clone, Debug, Default)]
-pub struct User {}
+pub struct User {
+    pub title: Option<String>,
+}
 
 #[derive(Clone, Debug, Default)]
 pub struct Member {
     pub last_stream_notify_timestamp: i64,
-}
-
-impl Member {
 }
 
 pub struct Handle {
@@ -103,7 +102,7 @@ impl Handle {
 
     pub fn guild(&self,
         guild_id: u64,
-    ) -> Result<Option<Guild>, ()> {
+    ) -> Result<Guild, ()> {
         let mut stmt = match self.connection.prepare(
             // Placeholder for querying something of actual use...
             "SELECT DiscordGuildId FROM Guilds WHERE DiscordGuildId = ?1")
@@ -123,8 +122,12 @@ impl Handle {
         };
 
         match result_iter.next() {
-            Some(guild) => Ok(Some(guild.unwrap())),
-            None => Ok(None),
+            Some(guild) => Ok(guild.unwrap()),
+            None => {
+                debug!("No db entry found for guild_id {}, returning default Guild instance",
+                    guild_id);
+                Ok(Default::default())
+            }
         }
     }
 
@@ -144,12 +147,13 @@ impl Handle {
         Ok(())
     }
 
+    /// Get a user's data.
+    /// Return a default User instance if no record was found.
     pub fn user(&self,
         user_id: u64,
-    ) -> Result<Option<User>, ()> {
+    ) -> Result<User, ()> {
         let mut stmt = match self.connection.prepare(
-            // Placeholder for querying something of actual use...
-            "SELECT DiscordUserId FROM Users WHERE DiscordUserId = ?1")
+            "SELECT Title FROM Users WHERE DiscordUserId = ?1")
         {
             Ok(stmt) => stmt,
             Err(_) => return Err(()),
@@ -157,28 +161,37 @@ impl Handle {
 
         let mut result_iter = match stmt.query_map(
             params![user_id as i64],
-            |_row|
+            |row|
         {
-            Ok(User{})
+            Ok(User{
+                title: row.get(0).unwrap(),
+            })
         }) {
             Ok(result_iter) => result_iter,
             Err(_) => return Err(()),
         };
 
         match result_iter.next() {
-            Some(user) => Ok(Some(user.unwrap())),
-            None => Ok(None),
+            Some(user) => Ok(user.unwrap()),
+            None => {
+                debug!("No db entry found for user_id {}, returning default User instance",
+                    user_id);
+                Ok(Default::default())
+            },
         }
     }
+
     pub fn user_update(&self,
         user_id: u64,
-        _data: &User,
+        data: &User,
     ) -> Result<(), ()>
     {
         if let Err(_) = self.connection.execute(
-            // Placeholder for storing something of actual use...
-            "INSERT OR REPLACE INTO Users(DiscordUserId) VALUES(?1)",
-            params![user_id as i64],
+            "INSERT OR REPLACE INTO Users(DiscordUserId, Title) VALUES(?1, ?2)",
+            params![
+                user_id as i64,
+                data.title,
+            ],
         )
         {
             return Err(())
@@ -189,7 +202,7 @@ impl Handle {
     pub fn member(&self,
         guild_id: u64,
         user_id: u64,
-    ) -> Result<Option<Member>, ()> {
+    ) -> Result<Member, ()> {
         let mut stmt = match self.connection.prepare(
             "SELECT LastStreamNotifyTimestamp FROM Members
              WHERE DiscordGuildId = ?1 AND DiscordUserId = ?2")
@@ -214,8 +227,12 @@ impl Handle {
         };
 
         match result_iter.next() {
-            Some(member) => Ok(Some(member.unwrap())),
-            None => Ok(None),
+            Some(member) => Ok(member.unwrap()),
+            None => {
+                debug!("No db entry found for member_id {}, returning default Member instance",
+                    guild_id);
+                Ok(Default::default())
+            },
         }
     }
 
