@@ -1,5 +1,4 @@
-target
+app/target
 mount
-sqlite
 README.md
 LICENSE

@@ -1,3 +1,4 @@
 app/Cargo.lock
 app/target
-mount
+mount/env
+mount/catnip.db3

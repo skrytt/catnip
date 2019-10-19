@@ -1,5 +1,5 @@
 #[macro_use] extern crate log;
-//
+
 mod commands;
 mod database;
 mod stream_notify;
@@ -7,6 +7,8 @@ mod stream_notify;
 use commands::{
     general::*,
     cat::cat::*,
+    roll::*,
+    user::*,
 };
 use dotenv;
 use serenity::{
@@ -57,13 +59,22 @@ impl EventHandler for Handler {
 group!({
     name: "general",
     options: {},
-    commands: [roll20],
+    commands: [
+        roll20,
+        roll,
+    ],
 });
 
-group!({ 
+group!({
     name: "cat",
     options: {},
     commands: [cat],
+});
+
+group!({
+    name: "user",
+    options: {},
+    commands: [title],
 });
 
 #[help]
@@ -95,6 +106,11 @@ fn main() {
 
     let token = env::var("DISCORD_TOKEN")
         .expect("Expected a token in the environment");
+
+    // Do any database schema migration work before starting the Discord client
+    let database = database::Handle::new();
+    database.update_schema()
+        .expect("Couldn't update database schema, giving up");
 
     let mut client = Client::new(
         &token,
@@ -147,6 +163,7 @@ fn main() {
         .help(&MY_HELP)
         .group(&GENERAL_GROUP)
         .group(&CAT_GROUP)
+        .group(&USER_GROUP)
     );
 
     if let Err(why) = client.start() {

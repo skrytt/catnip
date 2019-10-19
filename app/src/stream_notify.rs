@@ -37,7 +37,7 @@ pub fn handler(
         },
     };
 
-    debug!("User retrieval...");
+    debug!("User Discord data retrieval...");
     let user_id = presence_update_event.presence.user_id;
 
     match context.cache.read().user(user_id) {
@@ -56,23 +56,8 @@ pub fn handler(
         },
     };
     let database = database::Handle::new();
-    match database.user(user_id.0) {
-        Err(_) => {
-            error!("Could not retrieve user data from database");
-            return
-        },
-        Ok(Some(_)) => (),
-        Ok(None) => {
-            if let Err(_) = database.user_update(
-                user_id.0, &Default::default()
-            ) {
-                error!("Could not add user data to database");
-                return
-            }
-        },
-    };
 
-    debug!("Guild retrieval...");
+    debug!("Guild ID retrieval...");
     let guild_id = match presence_update_event.guild_id {
         None => {
             debug!("Got presence update with no discord guild ID");
@@ -80,23 +65,8 @@ pub fn handler(
         },
         Some(guild_id) => guild_id,
     };
-    match database.guild(guild_id.0) {
-        Err(_) => {
-            error!("Could not retrieve guild data from database");
-            return
-        },
-        Ok(Some(_)) => (),
-        Ok(None) => {
-            if let Err(_) = database.guild_update(
-                guild_id.0, &Default::default()
-            ) {
-                error!("Could not add guild data to database");
-                return
-            }
-        }
-    };
 
-    debug!("Member retrieval...");
+    debug!("Member DB data retrieval...");
     let member: database::Member = match database.member(
         guild_id.0, user_id.0)
     {
@@ -104,8 +74,7 @@ pub fn handler(
             error!("Could not retrieve member data from database");
             return
         },
-        Ok(Some(data)) => data,
-        Ok(None) => Default::default(),
+        Ok(data) => data,
     };
 
     // Set STREAM_NOTIFY_COOLDOWN in the mount/env file to override the default duration.
@@ -135,10 +104,29 @@ fn stream_notify(
     user_id: UserId,
     streaming_activity: Activity,
 ) {
+    debug!("User DB data retrieval...");
+    let database = database::Handle::new();
+    let user: database::User = match database.user(user_id.0)
+    {
+        Err(_) => {
+            error!("Could not retrieve user data from database");
+            return
+        },
+        Ok(data) => data,
+    };
+
+    let user_title = match user.title {
+        None => String::new(),
+        Some(prefix) => {
+            let mut prefix = prefix.clone();
+            prefix.push(' ');
+            prefix
+        },
+    };
+
     // Update the timestamp of the last shout-out in the database
     let mut member = member.clone();
     member.last_stream_notify_timestamp = time::get_time().sec;
-    let database = database::Handle::new();
     if let Err(_) = database.member_update(
         guild_id.0,
         user_id.0,
@@ -209,6 +197,7 @@ fn stream_notify(
     };
 
     let response = MessageBuilder::new()
+        .push(user_title)
         .push_bold_safe(member_name)
         .push(" is streaming ")
         .push_bold_safe(streaming_activity.name)
