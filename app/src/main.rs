@@ -8,7 +8,10 @@ use commands::{
     general::*,
     cat::cat::*,
     roll::*,
-    user::*,
+    user::{
+        colour::*,
+        title::*,
+    },
 };
 use dotenv;
 use serenity::{
@@ -74,7 +77,10 @@ group!({
 group!({
     name: "user",
     options: {},
-    commands: [title],
+    commands: [
+        title,
+        colour,
+    ],
 });
 
 #[help]
