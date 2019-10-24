@@ -65,7 +65,7 @@ fn colour(ctx: &mut Context, msg: &Message) -> CommandResult {
                     };
 
                     let removals: Vec<RoleId> = match member.roles(&ctx.cache) {
-                        None => return Err(CommandError(msg.author.name.to_owned() + ", that color isn't available. Sorry!")),
+                        None => None,
                         Some(roles) => {
                             roles.iter()
                                 .filter(|role| role.name.starts_with("colour-"))
@@ -74,10 +74,12 @@ fn colour(ctx: &mut Context, msg: &Message) -> CommandResult {
                         }
                     };
 
-                    if let Err(why) = member.remove_roles(&ctx.http, &removals) {
-                        error!("Error removing roles: {:?}", why);
-                        return Err(CommandError(msg.author.name.to_owned() + ", we couldn't remove your old colours. Sorry!"));
-                    };
+                    if removals != None {
+                        if let Err(why) = member.remove_roles(&ctx.http, &removals) {
+                            error!("Error removing roles: {:?}", why);
+                            return Err(CommandError(msg.author.name.to_owned() + ", we couldn't remove your old colours. Sorry!"));
+                        };
+                    }
 
                     match member.add_role(&ctx.http, role_id) {
                         Ok(_) => {
