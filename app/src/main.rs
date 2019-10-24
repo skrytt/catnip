@@ -11,8 +11,9 @@ use commands::{
     user::{
         colour::*,
         title::*,
-    },
+    }
 };
+
 use dotenv;
 use serenity::{
     prelude::*,

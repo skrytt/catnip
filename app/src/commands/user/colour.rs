@@ -75,6 +75,7 @@ fn colour(ctx: &mut Context, msg: &Message) -> CommandResult {
                     };
 
                     if let Err(why) = member.remove_roles(&ctx.http, &removals) {
+                        error!("Error removing roles: {:?}", why);
                         return Err(CommandError(msg.author.name.to_owned() + ", we couldn't remove your old colours. Sorry!"));
                     };
 
