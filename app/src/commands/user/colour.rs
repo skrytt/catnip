@@ -16,9 +16,9 @@ use serenity::{
 #[usage = "`!colour name of colour`"]
 fn colour(ctx: &mut Context, msg: &Message) -> CommandResult {
     debug!("colour command handler called");
-    let args: Vec<&str> = msg.content.split(' ').collect();
+    let args: Vec<&str> = msg.content.split(' ').skip(1).collect();
 
-    match args.get(1) {
+    match args.get(0) {
         None => {
             let response = MessageBuilder::new()
                 .push_bold_safe(&msg.author)
