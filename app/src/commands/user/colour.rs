@@ -61,7 +61,7 @@ fn colour(ctx: &mut Context, msg: &Message) -> CommandResult {
 
                     let role_id = match p_guild.role_by_name(colour) {
                         Some(role_id) => role_id,
-                        None => return Err(CommandError(msg.author.name.to_owned() + ", that color isn't available. Sorry!"))
+                        None => return Err(CommandError(msg.author.name.to_owned() + ", the colour " + colour + " isn't available. Sorry!"))
                     };
 
                     let removals: Vec<RoleId> = match member.roles(&ctx.cache) {
