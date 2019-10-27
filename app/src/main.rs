@@ -7,6 +7,7 @@ mod stream_notify;
 use commands::{
     general::*,
     cat::cat::*,
+    debug::debug::*,
     roll::*,
     user::*,
 };
@@ -76,6 +77,13 @@ group!({
     options: {},
     commands: [title],
 });
+
+group!({
+    name: "debug",
+    options: {},
+    commands: [debug],
+});
+
 
 #[help]
 #[individual_command_tip =
@@ -164,6 +172,7 @@ fn main() {
         .group(&GENERAL_GROUP)
         .group(&CAT_GROUP)
         .group(&USER_GROUP)
+        .group(&DEBUG_GROUP)
     );
 
     if let Err(why) = client.start() {
