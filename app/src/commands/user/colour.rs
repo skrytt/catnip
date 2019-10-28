@@ -13,7 +13,8 @@ use serenity::{
 // roles, prefixed with `colour-`. 
 #[command]
 #[description = "Sets your colour using designated roles."]
-#[usage = "`!colour name of colour`"]
+#[usage = "`!colour <name of colour>`"]
+#[only_in(guilds)]
 fn colour(ctx: &mut Context, msg: &Message) -> CommandResult {
     debug!("colour command handler called");
     let args: Vec<&str> = msg.content.split(' ').skip(1).collect();
