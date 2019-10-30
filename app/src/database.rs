@@ -242,19 +242,25 @@ impl Handle {
         data: &Member
     ) -> Result<(), ()>
     {
-        if let Err(_) = self.connection.execute(
-            "INSERT OR REPLACE INTO Members(
+        let rowschanged = match self.connection.execute("INSERT OR REPLACE INTO Members(
              DiscordGuildId, DiscordUserId, LastStreamNotifyTimestamp)
              VALUES(?1, ?2, ?3)",
-            params![
+             params![
                 guild_id as i64,
                 user_id as i64,
                 data.last_stream_notify_timestamp,
-            ],
-        )
-        {
-            return Err(())
+            ],) {
+            Ok(updated) => {
+                debug!("Member ID: {:?} updated", user_id);
+            },
+            Err(err) => {
+                debug!("update failed: {}", err);
+                return Err(());
+            },
         };
+
+        debug!("Amount of Rows Changed for updating member: {:?}", rowschanged);
+
         Ok(())
     }
 }

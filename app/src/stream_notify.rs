@@ -213,8 +213,8 @@ fn stream_notify(
         Some(stream_game) => stream_game,
         None => {
             /* Can happen it's fine */
-            info!("No details within the activity.");
-            String::from("")
+            debug!("No details within the activity.");
+            String::new()
         },
     };
 
@@ -235,11 +235,11 @@ fn stream_notify(
                         .colour(member_colour)
                         .url(&stream_url) // Stream URL
                         .author(|a| {
-                            a.name(format!("{:?} {:?}", &user_title, &member_name))
+                            a.name(format!("{} {}", &user_title, &member_name))
                                 // Gets pfp url or just discords default URL for pfp
                                 .icon_url(member.user.read().face())
                         })
-                        .field("Playing", format!("{:?}", &stream_game), true) // Game being Played
+                        .field("Playing", format!("{}", &stream_game), true) // Game being Played
                         //.footer(|f| f.text(format!("Stream started at 13:37"))) // Point out stream starting time
         )
     }) {error!("Error sending message: {:?},", why)};
