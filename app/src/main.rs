@@ -6,7 +6,10 @@ mod stream_notify;
 
 use commands::{
     general::*,
-    cat::cat::*,
+    animals::{
+        cat::*,
+        dog::*
+    },
     roll::*,
     user::{
         colour::*,
@@ -70,9 +73,12 @@ group!({
 });
 
 group!({
-    name: "cat",
+    name: "animals",
     options: {},
-    commands: [cat],
+    commands: [
+    cat,
+    dog,
+    ],
 });
 
 group!({
@@ -169,7 +175,7 @@ fn main() {
         })
         .help(&MY_HELP)
         .group(&GENERAL_GROUP)
-        .group(&CAT_GROUP)
+        .group(&ANIMALS_GROUP)
         .group(&USER_GROUP)
     );
 
