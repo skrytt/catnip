@@ -105,7 +105,7 @@ fn my_help(
 }
 
 fn main() {
-    dotenv::from_filename(".env")
+    dotenv::from_filename("mount/env")
         .expect("Failed to load mount/env file");
 
     env_logger::init();
