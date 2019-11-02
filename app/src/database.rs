@@ -2,7 +2,7 @@
 use rusqlite::{params, Connection};
 use std::{env, fs, io::Read};
 
-const DEFAULT_DATABASE_PATH: &'static str = "/catnip/mount/catnip.db3";
+const DEFAULT_DATABASE_PATH: &'static str = "mount/catnip.db3";
 
 #[derive(Clone, Debug, Default)]
 pub struct Guild {}
@@ -36,7 +36,7 @@ impl Handle {
 
     pub fn update_schema(&self) -> Result<(), ()> {
         // Read file names into a Vec for sorting
-        let mut sql_files: Vec<_> = match fs::read_dir("/catnip/mount/sql") {
+        let mut sql_files: Vec<_> = match fs::read_dir("../mount/sql") {
             Ok(files) => files,
             Err(_) => {
                 error!("Could not find any sqlfiles");

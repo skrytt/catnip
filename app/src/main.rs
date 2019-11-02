@@ -81,7 +81,10 @@ group!({
 group!({
     name: "debug",
     options: {},
-    commands: [debug],
+    commands: [
+        debug,
+        debugdbupdate,
+    ],
 });
 
 
@@ -107,7 +110,7 @@ fn my_help(
 }
 
 fn main() {
-    dotenv::from_filename("mount/env")
+    dotenv::from_filename(".env")
         .expect("Failed to load mount/env file");
 
     env_logger::init();

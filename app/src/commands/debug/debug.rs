@@ -1,3 +1,5 @@
+use crate::database;
+
 use serenity::{
     prelude::*,
     model::prelude::*,
@@ -10,8 +12,9 @@ use serenity::{
 use std::borrow::Borrow;
 use std::time::SystemTime;
 
-#[command]
 // Debug Twitch Shoutout Message
+#[command]
+#[owners_only]
 fn debug(context: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
     debug!("twitchdebug command handler called.");
     // debug!("Message: {:?}", msg);
@@ -71,6 +74,69 @@ fn debug(context: &mut Context, msg: &Message, mut args: Args) -> CommandResult 
                 //.fields(self.create_fields(false))
         )
     }) {error!("Error sending message: {:?},", why)};
+
+    Ok(())
+}
+
+#[command]
+#[owners_only]
+fn debugdbupdate(context: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
+    let database = database::Handle::new();
+
+    let guild_id = match msg.guild_id {
+        None => {
+            let txt = "Call not made in a Guild Channel";
+            return Err(CommandError(String::from(txt)))}
+        Some(guild_id) => guild_id
+    };
+
+
+    debug!("Member DB data retrieval...");
+    let member: database::Member = match database.member(
+        guild_id.0, msg.author.id.0)
+        {
+            Err(_) => {
+                let txt= "Could not retrieve member data from database";
+                return Err(CommandError(String::from(txt)));
+            },
+            Ok(data) => data,
+        };
+
+    debug!("User DB data retrieval...");
+    let user: database::User = match database.user(msg.author.id.0)
+        {
+            Err(_) => {
+                let txt=  "Could not retrieve user data from database";
+                return Err(CommandError(String::from(txt)));
+            },
+            Ok(data) => data,
+        };
+
+    // Update the timestamp of the last shout-out in the database
+    let mut member = member.clone();
+    member.last_stream_notify_timestamp = time::get_time().sec;
+
+    debug!("guild_id: {:?}, user_id: {:?}, member: {:?}", guild_id.0, msg.author.id.0, member.last_stream_notify_timestamp);
+
+//    if let Err(_) = database.member_update(
+//        guild_id.0,
+//        user_id.0,
+//        &member
+//    ) {
+//        let txt = "Couldn't update member data in database");
+//        return Err(CommandError(String::from(txt)));
+//    }
+    let update = match database.member_update(
+        guild_id.0,
+        msg.author.id.0,
+        &member,
+    ) {
+        Ok(update) => update,
+        Err(_) => {
+            let txt=  "Couldn't update member data in database";
+            return Err(CommandError(String::from(txt)));
+        },
+    };
 
     Ok(())
 }
