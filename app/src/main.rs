@@ -6,7 +6,10 @@ mod stream_notify;
 
 use commands::{
     general::*,
-    cat::cat::*,
+    animals::{
+        cat::*,
+        dog::*
+    },
     roll::*,
     user::*,
 };
@@ -66,9 +69,12 @@ group!({
 });
 
 group!({
-    name: "cat",
+    name: "animals",
     options: {},
-    commands: [cat],
+    commands: [
+    cat,
+    dog,
+    ],
 });
 
 group!({
@@ -99,7 +105,7 @@ fn my_help(
 }
 
 fn main() {
-    dotenv::from_filename("mount/env")
+    dotenv::from_filename(".env")
         .expect("Failed to load mount/env file");
 
     env_logger::init();
@@ -162,7 +168,7 @@ fn main() {
         })
         .help(&MY_HELP)
         .group(&GENERAL_GROUP)
-        .group(&CAT_GROUP)
+        .group(&ANIMALS_GROUP)
         .group(&USER_GROUP)
     );
 
