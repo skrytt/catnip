@@ -6,10 +6,12 @@ use serenity::{
             gateway::{ActivityType, Activity},
     },
     prelude::*,
-    utils::MessageBuilder,
+    utils::{MessageBuilder
+             ,Colour},
 };
 use std::env;
 use time;
+use std::borrow::Borrow;
 
 const DEFAULT_STREAM_NOTIFY_COOLDOWN: i64 = 21600; // 6 hours
 
@@ -132,7 +134,7 @@ fn stream_notify(
         user_id.0,
         &member
     ) {
-        error!("Could update member data in database");
+        error!("Couldn't update member data in database");
         return
     }
     debug!("Updated member timestamp to {}", member.last_stream_notify_timestamp);
@@ -165,6 +167,18 @@ fn stream_notify(
     };
     let discord_guild = discord_guild.read();
 
+    // Get the member from the guild
+    let member = match discord_guild
+        .members
+        .get(&user_id)
+    {
+        Some(member) => member,
+        None => {
+            error!("Could not retrieve guild member from Serenity cache");
+            return
+        }
+    };
+
     let discord_channel = match discord_guild
         .channels
         .get(&discord_channel_id)
@@ -176,16 +190,14 @@ fn stream_notify(
         }
     };
 
-    // Get the member name in the context of the guild (there could be a nickname)
-    let member_name = match discord_guild
-        .members
-        .get(&user_id)
+    // Get the member display name (there could be a nickname)
+    let member_name = member.display_name();
+
+    let member_colour = match member.colour(context.cache.borrow())
     {
-        Some(member) => member.display_name(),
-        None => {
-            error!("Could not retrieve guild member from Serenity cache");
-            return
-        }
+        Some(member_colour) => member_colour,
+        // If no colour use the default colour (no clue when this would be the case)
+        None => {Colour::default()},
     };
 
     let stream_url = match streaming_activity.url {
@@ -196,16 +208,39 @@ fn stream_notify(
         }
     };
 
-    let response = MessageBuilder::new()
-        .push(user_title)
-        .push_bold_safe(member_name)
+    let stream_title = streaming_activity.name;
+    let stream_game = match streaming_activity.details {
+        Some(stream_game) => stream_game,
+        None => {
+            /* Can happen it's fine */
+            debug!("No details within the activity.");
+            String::new()
+        },
+    };
+
+    let channel_text = MessageBuilder::new()
+        .push(&user_title)
+        .push_bold_safe(&member_name)
         .push(" is streaming ")
-        .push_bold_safe(streaming_activity.name)
-        .push(":\n")
-        .push(stream_url)
+        .push_bold_safe(&stream_title)
+        .push(": ")
+        .push(&stream_url)
         .build();
 
-    if let Err(why) = discord_channel.say(&context.http, &response) {
-        error!("Error sending message: {:?}", why);
-    }
+    //TODO: Look at error handling
+    if let Err(why) = discord_channel.send_message(&context, |m| {
+        m.content(channel_text);
+        m.embed(|e|
+                    e.title(&stream_title) // Stream Title
+                        .colour(member_colour)
+                        .url(&stream_url) // Stream URL
+                        .author(|a| {
+                            a.name(format!("{} {}", &user_title, &member_name))
+                                // Gets pfp url or just discords default URL for pfp
+                                .icon_url(member.user.read().face())
+                        })
+                        .field("Playing", format!("{}", &stream_game), true) // Game being Played
+                        //.footer(|f| f.text(format!("Stream started at 13:37"))) // Point out stream starting time
+        )
+    }) {error!("Error sending message: {:?},", why)};
 }
