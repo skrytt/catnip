@@ -208,12 +208,20 @@ fn stream_notify(
         }
     };
 
-    let stream_title = streaming_activity.name;
-    let stream_game = match streaming_activity.details {
+    let stream_title = match streaming_activity.details {
+        Some(stream_title) => stream_title,
+        None => {
+            /* Shouldn't happen unless presence update gets changed AGAIN */
+            debug!("No details within the activity.");
+            String::new()
+        },
+    };
+
+    let stream_game = match streaming_activity.state {
         Some(stream_game) => stream_game,
         None => {
             /* Can happen it's fine */
-            debug!("No details within the activity.");
+            debug!("No state within the activity.");
             String::new()
         },
     };

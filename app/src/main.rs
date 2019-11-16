@@ -6,11 +6,17 @@ mod stream_notify;
 
 use commands::{
     general::*,
-    cat::cat::*,
-    debug::debug::*,
+    animals::{
+        cat::*,
+        dog::*
+    },
     roll::*,
-    user::*,
+    user::{
+        colour::*,
+        title::*,
+    }
 };
+
 use dotenv;
 use serenity::{
     prelude::*,
@@ -67,15 +73,21 @@ group!({
 });
 
 group!({
-    name: "cat",
+    name: "animals",
     options: {},
-    commands: [cat],
+    commands: [
+    cat,
+    dog,
+    ],
 });
 
 group!({
     name: "user",
     options: {},
-    commands: [title],
+    commands: [
+        title,
+        colour,
+    ],
 });
 
 group!({
@@ -173,9 +185,8 @@ fn main() {
         })
         .help(&MY_HELP)
         .group(&GENERAL_GROUP)
-        .group(&CAT_GROUP)
+        .group(&ANIMALS_GROUP)
         .group(&USER_GROUP)
-        .group(&DEBUG_GROUP)
     );
 
     if let Err(why) = client.start() {
