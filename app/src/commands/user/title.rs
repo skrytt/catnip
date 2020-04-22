@@ -8,6 +8,7 @@ use serenity::{
         macros::command,
     },
     utils::MessageBuilder,
+    utils::parse_emoji,
 };
 
 const MAX_TITLE_LENGTH: usize = 128;
@@ -38,6 +39,21 @@ fn title(ctx: &mut Context, msg: &Message) -> CommandResult {
                     Ok(())
                 },
                 Some(title_args) => {
+                    // Check for custom emojis
+                    if has_custom_emoji(Some(title_args)) {
+                        let response = MessageBuilder::new()
+                            .push_bold_safe(&msg.author)
+                            .push(", custom Emojis are not allowed in titles")
+                            .build();
+
+                        if let Err(why) = msg.channel_id.say(&ctx.http, &response) {
+                            error!("Error sending message: {:?}", why);
+                        }
+
+                        // This is a usage error, not a bot failure
+                        return Ok(())
+                    }
+
                     let new_title = title_args.join(" ");
                     handle_set_title(ctx, msg, Some(new_title))
                 },
@@ -72,14 +88,14 @@ fn handle_get_title(
     debug!("User DB data retrieval...");
     let database = database::Handle::new();
     let user: database::User = match database.user(user_id.0)
-    {
-        Err(_) => {
-            let reason = String::from("Could not retrieve user data from database");
-            error!("{}", reason);
-            return Err(CommandError(reason))
-        },
-        Ok(data) => data,
-    };
+        {
+            Err(_) => {
+                let reason = String::from("Could not retrieve user data from database");
+                error!("{}", reason);
+                return Err(CommandError(reason))
+            },
+            Ok(data) => data,
+        };
 
     let response = match user.title {
         None => MessageBuilder::new()
@@ -148,14 +164,14 @@ fn handle_set_title(
     debug!("User DB data retrieval...");
     let database = database::Handle::new();
     let mut user: database::User = match database.user(user_id.0)
-    {
-        Err(_) => {
-            let reason = String::from("Could not retrieve user data from database");
-            error!("{}", reason);
-            return Err(CommandError(reason))
-        },
-        Ok(data) => data,
-    };
+        {
+            Err(_) => {
+                let reason = String::from("Could not retrieve user data from database");
+                error!("{}", reason);
+                return Err(CommandError(reason))
+            },
+            Ok(data) => data,
+        };
 
     user.title = title.clone();
 
@@ -188,4 +204,25 @@ fn handle_set_title(
     }
 
     Ok(())
+}
+
+fn has_custom_emoji(
+    title: Option<&[&str]>
+) -> bool
+{
+
+    for (i, item) in title.iter().enumerate() {
+        for(ie, title_part) in item.iter().enumerate() {
+            debug!("The {}th item is {:?}", i+1, title_part);
+
+            // if it can be parsed, it is an custom emoji
+            if let Some(emoji) = parse_emoji(title_part) {
+                debug!("Emoji Info, id:{:?}, name:{:?}", emoji.id, emoji.name);
+                return true;
+            }
+        }
+        debug!("The {}th item is {:?}", i+1, item);
+    }
+
+    return false;
 }
