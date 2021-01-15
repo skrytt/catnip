@@ -6,7 +6,8 @@ use serenity::{
     prelude::*,
     model::prelude::*,
     framework::standard::{
-        Args, CommandResult,
+        Args,
+        CommandResult,
         macros::command,
     },
     utils::MessageBuilder,
@@ -14,7 +15,7 @@ use serenity::{
 
 #[command]
 // Cat Pic
-fn cat(context: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
+async fn cat(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
     debug!("cat command handler called.");
     debug!("Message: {:?}", msg);
     debug!("Args: {:?}", args);

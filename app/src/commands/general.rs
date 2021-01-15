@@ -12,7 +12,7 @@ use serenity::{
 
 #[command]
 /// Roll 1d20 and send a response with the result.
-fn roll20(context: &mut Context, msg: &Message) -> CommandResult {
+async fn roll20(context: &Context, msg: &Message) -> CommandResult {
     debug!("roll20 command handler called");
 
     // The RNG function produces values in the range 0 to 20-1, so

@@ -13,7 +13,7 @@ use serenity::{
 
 #[command]
 /// Roll a number of same-sided dice and send a response with the result.
-fn roll(context: &mut Context, msg: &Message) -> CommandResult {
+async fn roll(context: &Context, msg: &Message) -> CommandResult {
     debug!("roll command handler called");
 
     let dice = match parse_roll(msg) {

@@ -14,7 +14,7 @@ use serenity::{
 
 #[command]
 // Dog Pic
-fn dog(context: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
+async fn dog(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
     debug!("dog command handler called.");
     debug!("Message: {:?}", msg);
     debug!("Args: {:?}", args);

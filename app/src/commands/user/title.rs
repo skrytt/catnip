@@ -16,7 +16,7 @@ const MAX_TITLE_LENGTH: usize = 128;
 #[command]
 #[description = "Gets, sets or clears your title."]
 #[usage = "`!title`, `!title set ...` or `!title clear`."]
-fn title(ctx: &mut Context, msg: &Message) -> CommandResult {
+async fn title(ctx: &Context, msg: &Message) -> CommandResult {
     debug!("title command handler called");
 
     let args: Vec<&str> = msg.content.split(' ').collect();
@@ -78,7 +78,7 @@ fn title(ctx: &mut Context, msg: &Message) -> CommandResult {
 }
 
 fn handle_get_title(
-    ctx: &mut Context,
+    ctx: &Context,
     msg: &Message,
 ) -> CommandResult
 {
@@ -118,7 +118,7 @@ fn handle_get_title(
 }
 
 fn handle_set_title(
-    ctx: &mut Context,
+    ctx: &Context,
     msg: &Message,
     title: Option<String>
 ) -> CommandResult

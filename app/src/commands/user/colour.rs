@@ -15,7 +15,7 @@ use serenity::{
 #[description = "Sets your colour using designated roles."]
 #[usage = "`!colour <name of colour>`"]
 #[only_in(guilds)]
-fn colour(ctx: &mut Context, msg: &Message) -> CommandResult {
+async fn colour(ctx: &Context, msg: &Message) -> CommandResult {
     debug!("colour command handler called");
     let args: Vec<&str> = msg.content.split(' ').skip(1).collect();
 
@@ -100,7 +100,7 @@ fn colour(ctx: &mut Context, msg: &Message) -> CommandResult {
 }
 
 // Sends a response to a user's message
-fn respond(ctx: &mut Context, msg: &Message, txt: &str) {
+fn respond(ctx: &Context, msg: &Message, txt: &str) {
     let response = MessageBuilder::new()
         .push_bold_safe(&msg.author)
         .push(", ")
