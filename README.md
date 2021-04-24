@@ -1,3 +1,7 @@
+# Archived
+
+More development may continue on https://github.com/Conundris/catnip , however, I've decided to focus my time on other projects.
+
 # catnip
 
 A Discord chatbot written in Rust, using Serenity and SQLite.
