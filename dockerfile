@@ -1,4 +1,4 @@
-FROM rust:1.37 as build
+FROM rust:1.38 as build
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update
